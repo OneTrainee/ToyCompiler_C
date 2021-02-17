@@ -198,15 +198,13 @@ void Parser::Statment() {
 	case KW_WHILE: // while语句
 		WhileStatement();
 		break;
-
-/*
 	case KW_CIN: // cin 语句
 		Parser::InStatement();
 		break;
 	case KW_COUT: // cout 语句
 		Parser::OutStatement();
 		break;
-*/
+
 		/*之后每写完一个补充在这里即可*/
 		/*··············*/
 	}
@@ -461,6 +459,116 @@ void Parser::CompoundStatment() {
 		// 
 	}
 }
+
+// InStatement:<in语句> -> <in关键字>  >> <变量名>
+void Parser::InStatement() {
+	_COUT("InStatement:<in语句> -> <in关键字>  >> <变量名>");
+
+	if (lexical.outSym() != KW_CIN) {
+		//
+		// 程序报错
+		//
+	}
+	lexical.getSym(); /* 获取 '>>' */
+	if (lexical.outSym() != IN) {
+		//
+		// 程序报错
+		//
+	}
+	// 获取 <变量名> 
+	lexical.getSym();
+
+	// 生成对应的中间代码 (IN,__,__,<变量名>)
+	QUADMEMBER op1;
+	op1.type = QUADMEMBER::_EMPTY;
+	QUADMEMBER op2;
+	op2.type = QUADMEMBER::_EMPTY;
+	QUADMEMBER opResult;
+
+	// 输入必须
+	if (lexical.outSym() == ID) {
+		opResult.type = QUADMEMBER::_VAR;
+		if (semantic.GetTheExistentVarObjectFromVarTable(lexical.outVarName(), opResult.value.varPointer) == false) {
+			// 
+			// 在该变量表中不存在该变量,出错..
+			//
+		}
+	}
+	else {
+		//
+		// 不是合法的变量名,这里报错
+		//
+	}
+
+	QUADSTATMENT qStatment = inter_code_generator.GenerateQuadStatment(OP_IN, op1, op2, opResult);
+	inter_code_generator.InsertQuadStatmentIntoIntermediaCodeList(qStatment);
+
+	// 读取 ';'，语句结束
+	lexical.getSym();
+	if (lexical.outSym() != SEMI) {
+		//
+		// 程序出差
+		//
+	}
+
+	return;
+
+}
+
+// OutStatement:<out语句> -> <out关键字>  << [<变量名>|<数字>];
+void Parser::OutStatement(){
+	_COUT("OutStatement:<out语句> -> <out关键字>  << [<变量名>|<数字>];");
+
+	if (lexical.outSym() != KW_COUT) {
+		//
+		// 程序报错
+		//
+	}
+	lexical.getSym(); /* 获取 '>>' */
+	if (lexical.outSym() != OUT) {
+		//
+		// 程序报错
+		//
+	}
+	// 获取 <变量名> 
+	lexical.getSym();
+
+	// 生成对应的中间代码 (OUT,__,__,<变量名>)
+	QUADMEMBER op1;
+	op1.type = QUADMEMBER::_EMPTY;
+	QUADMEMBER op2;
+	op2.type = QUADMEMBER::_EMPTY;
+	QUADMEMBER opResult;
+
+	// 输入必须
+	if (lexical.outSym() == ID) {
+		opResult.type = QUADMEMBER::_VAR;
+		if (semantic.GetTheExistentVarObjectFromVarTable(lexical.outVarName(), opResult.value.varPointer) == false) {
+			// 
+			// 在该变量表中不存在该变量,出错..
+			//
+		}
+	}
+	else {
+		//
+		// 不是合法的变量名,这里报错
+		//
+	}
+
+	QUADSTATMENT qStatment = inter_code_generator.GenerateQuadStatment(OP_OUT, op1, op2, opResult);
+	inter_code_generator.InsertQuadStatmentIntoIntermediaCodeList(qStatment);
+
+	// 读取 ';'，语句结束
+	lexical.getSym();
+	if (lexical.outSym() != SEMI) {
+		//
+		// 程序出差
+		//
+	}
+
+	return;
+}
+
 
 // BoolExpr:<布尔表达式> -> <算数表达式> [>|>=|<|<=|==|!=] <算数表达式>
 int Parser::BoolExpr() {

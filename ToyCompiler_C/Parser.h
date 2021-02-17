@@ -48,8 +48,8 @@ public:
 	void CompoundStatment(); // <复合语句>
 	void IfStatement(); // <if语句>
 	void WhileStatement(); // <while语句>
-	//void InStatement(); // <cin语句>
-	//void OutStatement(); // <cout语句>
+	void InStatement(); // <cin语句>
+	void OutStatement(); // <cout语句>
 
 	// 布尔表达式 [注意：其不需要返回值，直接生成中间代码即可]
 	int BoolExpr();
