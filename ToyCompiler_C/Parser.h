@@ -3,7 +3,9 @@
 #include "LexicalAnalyzer.h"
 #include "SemanticAnalyzer.h"
 #include "IntermediaCodeGenerator.h"
+#include "Logger.h"
 #include "common.h"
+#include <map>
 using namespace std;
 
 
@@ -21,7 +23,12 @@ private:
 	LexicalAnalyzer lexical;
 	SemanticAnalyzer semantic;
 	IntermediaCodeGenerator inter_code_generator;
-	
+	Logger logger;
+
+private: // 日志相关
+	static map<string, string> LogDict; // 日志字典
+	static map<string, string> InitLogDict(); // 初始化日志字典
+	void notifyLogger(string currentStatementStatus); // 通知记录器
 
 public:
 

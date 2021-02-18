@@ -1,21 +1,68 @@
 #include "Parser.h"
 #include "common.h"
 
+void Parser::notifyLogger(string currentStatementStatus) {
+	if (LogDict.count(currentStatementStatus) == 0) {
+		cout << "Cannot find the parser's dict log --- " << currentStatementStatus << endl;
+	}
+	else {
+		logger.log(LogDict[currentStatementStatus]);
+	}
+}
+
+map<string, string> Parser::InitLogDict() {
+	map<string, string> Dict = {
+		make_pair("Program","< 程序 > -> <main关键字>{<声明语句序列><语句序列>}#"),
+		make_pair("End","< 结束 > -> #"),
+		make_pair("DeclarationList","< 声明语句序列 > -> <声明语句> < 声明语句序列结尾>"),
+		make_pair("DeclarationListTail","<声明语句序列结尾> -> <声明语句><声明语句序列结尾> | 空"),
+		make_pair("Declaration","< 声明语句 > -> <int / string关键字(type)> 变量名 < 声明语句结尾>"),
+		make_pair("DeclarationTail","<声明语句结尾> -> , <变量名><声明语句结尾> | ;"),
+		make_pair("StatmentList","<语句序列> -> <语句><语句序列结尾>"),
+		make_pair("StatmentListTail","<语句序列结尾> -> <语句><语句序列结尾>|空"),
+		make_pair("Statment","<语句> -> <if语句> | <while语句> | <in语句> | <out语句> | <赋值语句> | <复合语句>"),
+
+		make_pair("AssignStatment","<赋值语句> -> <变量名> = <算数表达式>;|<变量名> @ <字符串>;"),
+		make_pair("CompoundStatment","<复合语句> -> {<语句序列>}"),
+		make_pair("IfStatement","<if语句> -> <if关键字>(<布尔表达式>)<复合语句>else<复合语句>|<if关键字>(<布尔表达式>)<复合语句>"),
+		make_pair("WhileStatement","<while语句> -> <while关键字>(布尔表达式)<复合语句>"),
+		make_pair("InStatement","<in语句> -> <in关键字>  >> <变量名>;"),
+		make_pair("OutStatement","<out语句> -> <out关键字>  << [<变量名>|<数字>];"),
+		
+		make_pair("BoolExpr","<布尔表达式> -> <算数表达式> [>|>=|<|<=|==|!=] <算数表达式>"),
+		
+		make_pair("AlgExrp","<算数表达式> -> <项>[+|-] <算数表达式尾> | <项> 空"),
+		make_pair("AlgExprTail","<算数表达式尾> -> [+|-] <算数表达式尾>|空"),
+		make_pair("Item","<项> -> <因子> * <项尾> | <因子>"),
+		make_pair("ItemTail","<项尾> -> <因子> * | <因子> 空"),
+		make_pair("Factor","<因子> -> <数字> | <变量名>")
+	};
+
+	return Dict;
+}
+map<string, string> Parser::LogDict = Parser::InitLogDict();
+
+//
+//
+//
 
 int IfWithoutElseButton = 0;
 
+
+//
+//
+//
 
 inline void _COUT(string s) {
 	cout << s << endl;
 }
 
 // 
-Parser::Parser(string resource_file_name) :lexical(resource_file_name) {}
+Parser::Parser(string resource_file_name) :lexical(resource_file_name),logger("Log_Parser") {}
 
 // <程序>-><main关键字>{<声明语句序列><语句序列>}#
 void Parser::Program() {
-	
-	_COUT("<程序>-><main关键字>{<声明语句序列><语句序列>}#");
+	notifyLogger("Program");
 	
 	lexical.getCh(); // 必须预先读取第一个字符
 	
@@ -46,7 +93,7 @@ void Parser::Program() {
 
 // DeclarationList:<声明语句序列> -> <声明语句><声明语句序列结尾>
 void Parser::DeclarationList() {
-	_COUT("DeclarationList:<声明语句序列> -> <声明语句><声明语句序列结尾>");
+	notifyLogger("DeclarationList");
 
 	// 判断当前符号是否满足声明语句的定义
 	if (lexical.outSym() == KW_INT || lexical.outSym() == KW_STRING) {
@@ -58,7 +105,7 @@ void Parser::DeclarationList() {
 
 // Declaration:<声明语句>-><int/string关键字(type)> 变量名 <声明语句结尾>
 void Parser::Declaration() {
-	_COUT("Declaration:<声明语句>-><int/string关键字(type)> 变量名 <声明语句结尾>");
+	notifyLogger("Declaration");
 	
 	if (lexical.outSym() == KW_INT || lexical.outSym() == KW_STRING) {
 		
@@ -84,8 +131,9 @@ void Parser::Declaration() {
 }
 
 
+// DeclarationTail:<声明语句结尾>-> , <变量名><声明语句结尾> | ;
 void Parser::DeclarationTail(bool isStr) {
-	_COUT("DeclarationTail:<声明语句结尾>-> , <变量名><声明语句结尾> | ;");
+	notifyLogger("DeclarationTail");
 
 	lexical.getSym(); /* 尝试读取[','|';'] */
 	if (lexical.outSym() == SEMI) { // 若读到';',则这条语句结束.
@@ -111,7 +159,7 @@ void Parser::DeclarationTail(bool isStr) {
 
 // DeclarationListTail:<声明语句序列结尾> -> <声明语句><声明语句序列结尾> | 空
 void Parser::DeclarationListTail() {
-	_COUT("DeclarationListTail:<声明语句序列结尾> -> <声明语句><声明语句序列结尾> | 空");
+	notifyLogger("DeclarationListTail");
 
 	lexical.getSym();
 	if (lexical.outSym() == KW_INT || lexical.outSym() == KW_STRING) { // 仍然存在新的声明语句
@@ -124,8 +172,9 @@ void Parser::DeclarationListTail() {
 	}
 }
 
+// "<结束> -> #"
 void Parser::End() {
-	_COUT("<结束> -> #");
+	notifyLogger("End");
 	
 	semantic.ShowVarTable();
 	inter_code_generator.ShowIntermediaCodeList();
@@ -136,7 +185,7 @@ void Parser::End() {
 
 // <语句序列>-><语句><语句序列结尾>\n
 void Parser::StatmentList() {
-	_COUT("<语句序列>-><语句><语句序列结尾>");
+	notifyLogger("StatmentList");
 	Parser::Statment();
 	Parser::StatmentListTail();
 }
@@ -144,7 +193,7 @@ void Parser::StatmentList() {
 
 // StatmentListTail:<语句序列结尾>-><语句><语句序列结尾>|空
 void Parser::StatmentListTail() {
-	_COUT("<语句序列结尾>-><语句><语句序列结尾>|空");
+	notifyLogger("StatmentListTail");
 	/*
 	注意：
 		1.因为每一条语句都有明确的结束，所以不存在预读取。
@@ -184,7 +233,7 @@ void Parser::StatmentListTail() {
 
 // Statement:<语句>-> <if语句> | <while语句> | <in语句> | <out语句> | <赋值语句> | <复合语句>
 void Parser::Statment() {
-	_COUT("<语句>-> <if语句> | <while语句> | <in语句> | <out语句> | <赋值语句> | <复合语句>");
+	notifyLogger("Statment");
 	/*之前已经预读取过一个，因此不用继续读取*/
 
 	// 直接使用switch() 判断来调用相应函数即可
@@ -213,7 +262,7 @@ void Parser::Statment() {
 // IfStatement<if语句> -> <if关键字>(<布尔表达式>)<复合语句>else<复合语句> |  <if关键字>(<布尔表达式>)<复合语句>
 void Parser::IfStatement() {
 	
-	_COUT("<if语句> -> <if关键字>(<布尔表达式>)<复合语句>else<复合语句> |  <if关键字>(<布尔表达式>)<复合语句>");
+	notifyLogger("IfStatement");
 
 	if (lexical.outSym() != KW_IF) {
 		//
@@ -326,7 +375,8 @@ void Parser::IfStatement() {
 
 // IfWhile:<while语句> -> <while关键字>(布尔表达式)<复合语句>
 void Parser::WhileStatement() {
-	_COUT("IfWhile:<while语句> -> <while关键字>(布尔表达式)<复合语句>");
+
+	notifyLogger("WhileStatement");
 
 	// 1.在进入布尔表达式之前,预先记录中间代码的id,index
 	int inIndex = IntermediaCodeGenerator::currentId;
@@ -385,7 +435,7 @@ void Parser::WhileStatement() {
 
 // AssignStatment:<赋值语句> -> <变量名> = <算数表达式>;|<变量名> @ <字符串>;
 void Parser::AssignStatment() {
-	_COUT("AssignStatment:<赋值语句> -> <变量名> = <算数表达式>;|<变量名> @ <字符串>;");
+	notifyLogger("AssignStatment");
 	
 	// 1）申请变量
 	string varName = lexical.outVarName();
@@ -430,8 +480,7 @@ void Parser::AssignStatment() {
 
 // CompoundStatment:<复合语句> -> {<语句序列>}
 void Parser::CompoundStatment() {
-	_COUT("CompoundStatment:<复合语句> -> {<语句序列>}");
-
+	notifyLogger("CompoundStatment");
 	// 只要执行这函数，则当前 sym 一定为 {，不用预先读取。
 		// 进行常规验证即可
 	if (lexical.outSym() == LBRACE) {
@@ -462,7 +511,7 @@ void Parser::CompoundStatment() {
 
 // InStatement:<in语句> -> <in关键字>  >> <变量名>
 void Parser::InStatement() {
-	_COUT("InStatement:<in语句> -> <in关键字>  >> <变量名>");
+	notifyLogger("InStatement");
 
 	if (lexical.outSym() != KW_CIN) {
 		//
@@ -517,7 +566,7 @@ void Parser::InStatement() {
 
 // OutStatement:<out语句> -> <out关键字>  << [<变量名>|<数字>];
 void Parser::OutStatement(){
-	_COUT("OutStatement:<out语句> -> <out关键字>  << [<变量名>|<数字>];");
+	notifyLogger("OutStatement");
 
 	if (lexical.outSym() != KW_COUT) {
 		//
@@ -572,7 +621,7 @@ void Parser::OutStatement(){
 
 // BoolExpr:<布尔表达式> -> <算数表达式> [>|>=|<|<=|==|!=] <算数表达式>
 int Parser::BoolExpr() {
-	_COUT("<布尔表达式> -> <算数表达式> [>|>=|<|<=|==|!=] <算数表达式>");
+	notifyLogger("BoolExpr");
 	
 	/*
 		注意：虽然<布尔表达式>不会预先读取一个字符，但是其调用的<算数表达式>却会预先读取一个符号
@@ -650,7 +699,7 @@ int Parser::BoolExpr() {
 ******************************************************/
 // AlgExpr<算数表达式> -> <项>[+| -] <算数表达式尾> | <项> 空
 AlgExprReturnValue Parser::AlgExrp() {
-	_COUT("AlgExpr<算数表达式> -> <项>[+| -] <算数表达式尾> | <项> 空");
+	notifyLogger("AlgExrp");
 
 	// 1 获取<因子>
 	AlgExprReturnValue lAlgReturnValue = Item();
@@ -675,7 +724,7 @@ AlgExprReturnValue Parser::AlgExrp() {
 
 // Item:<项> -> <因子> * <项尾> | <因子>
 AlgExprReturnValue Parser::Item() {
-	_COUT("Item:<项> -> <因子> * <项尾> | <因子>");
+	notifyLogger("Item");
 	
 	// 1）首先尝试获取因子
 	AlgExprReturnValue lAlgReturnValue = Factor();
@@ -696,7 +745,7 @@ AlgExprReturnValue Parser::Item() {
 
 // Factor:<因子>-><数字> | <变量名>
 AlgExprReturnValue Parser::Factor() {
-	_COUT("Factor:<因子>-><数字> | <变量名>");
+	notifyLogger("Factor");
 
 	lexical.getSym();
 
@@ -725,7 +774,7 @@ AlgExprReturnValue Parser::Factor() {
 
 // ItemTail:<项尾> -> <因子> * | <因子> 空
 AlgExprReturnValue Parser::ItemTail(AlgExprReturnValue lAlgReturnValue) {
-	_COUT("ItemTail:<项尾> -> <因子> * | <因子> 空");
+	notifyLogger("ItemTail");
 
 	// 1) 先读取因子.
 	AlgExprReturnValue rAlgReturnValue = Parser::Factor();
@@ -761,7 +810,7 @@ AlgExprReturnValue Parser::ItemTail(AlgExprReturnValue lAlgReturnValue) {
 
 //AlgExprTail<算数表达式尾> -> [+|-] <算数表达式尾>|空
 AlgExprReturnValue Parser::AlgExprTail(AlgExprReturnValue lAlgReturnValue, bool isAdd) {
-	_COUT("AlgExprTail<算数表达式尾> -> [+|-] <算数表达式尾>|空");
+	notifyLogger("AlgExprTail");
 
 	// 1）肯定存在因子,进来先读取因子
 	AlgExprReturnValue rAlgReturnValue = Item();
